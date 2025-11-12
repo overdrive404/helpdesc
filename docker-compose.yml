@@ -1,0 +1,53 @@
+services:
+    app:
+        build:
+            context: .
+            dockerfile: Dockerfile
+        container_name: helpdesc_app
+        working_dir: /var/www
+        volumes:
+            - ./:/var/www
+        depends_on:
+            - db
+            - redis
+        networks:
+            - helpdesc
+
+    nginx:
+        image: nginx:latest
+        container_name: helpdesc_nginx
+        ports:
+            - "8080:80"
+        volumes:
+            - ./:/var/www
+            - ./nginx/default.conf:/etc/nginx/conf.d/default.conf
+        depends_on:
+            - app
+        networks:
+            - helpdesc
+
+    db:
+        image: postgres:16
+        container_name: helpdesc_postgres
+        restart: unless-stopped
+        environment:
+            POSTGRES_USER: laravel
+            POSTGRES_PASSWORD: secret
+            POSTGRES_DB: laravel
+        volumes:
+            - pgdata:/var/lib/postgresql/data
+        networks:
+            - helpdesc
+
+    redis:
+        image: redis:7
+        container_name: helpdesc_redis
+        restart: unless-stopped
+        networks:
+            - helpdesc
+
+networks:
+    helpdesc:
+
+volumes:
+    pgdata:
